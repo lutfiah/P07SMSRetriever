@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#00FFFF">>
+
+    <TextView
+        android:id="@+id/tvFrag1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Only SMS with this number" />
+
+    <EditText
+        android:id="@+id/etFrag1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ems="10"
+        android:inputType="number" />
+
+    <Button
+        android:id="@+id/btnAddTextFrag1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Retrieve SMS" />
+</LinearLayout>
