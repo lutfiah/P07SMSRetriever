@@ -1,8 +1,15 @@
 package com.myrp.a16023022.p07_smsretriever;
 
 
+import android.Manifest;
+import android.content.ContentResolver;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
+import android.support.v4.content.PermissionChecker;
+import android.text.format.DateFormat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,8 +24,8 @@ import android.widget.TextView;
 public class FragmentFirst extends Fragment {
 
 
-    Button btnAddText;
-    TextView tvFrag1;
+    Button btnRetrieve1;
+    TextView tvFrag1, tvDisplay1;
     EditText etFrag1;
 
     @Override
@@ -29,13 +36,67 @@ public class FragmentFirst extends Fragment {
 
         etFrag1 = (EditText) view.findViewById(R.id.etFrag1);
         tvFrag1 = (TextView) view.findViewById(R.id.tvFrag1);
-        btnAddText = (Button) view.findViewById(R.id.btnAddTextFrag1);
+        tvDisplay1 = (TextView) view.findViewById(R.id.tvDisplay1);
+        btnRetrieve1 = (Button) view.findViewById(R.id.btnAddTextFrag1);
 
-        btnAddText.setOnClickListener(new View.OnClickListener() {
+        btnRetrieve1.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String data = tvFrag1.getText().toString() + "\n" + "New Data";
-                tvFrag1.setText(data);
+                String regexStr = "^[0-9]*$";
+                String data = etFrag1.getText().toString();
+                if(data.trim().matches(regexStr))
+                {
+                    int permissionCheck = PermissionChecker.checkSelfPermission
+                            (getActivity(), Manifest.permission.READ_SMS);
+
+                    if (permissionCheck != PermissionChecker.PERMISSION_GRANTED){
+                        ActivityCompat.requestPermissions(getActivity(),
+                                new String[]{Manifest.permission.READ_SMS}, 0);
+                        // stops the action from proceeding further as permission not
+                        //  granted yet
+                        return;
+                    }
+
+                    Uri uri = Uri.parse("content://sms");
+                    // The columns we want
+                    //  date is when the message took place
+                    //  address is the number of the other party
+                    //  body is the message content
+                    //  type 1 is received, type 2 sent
+                    String[] reqCols = new String[]{"date", "address", "body", "type"};
+
+                    // Get Content Resolver object from which to
+                    //  query the content provider
+                    ContentResolver cr = getActivity().getContentResolver() ;
+                    // The filter String
+                    String filter="body LIKE ? AND body LIKE ?";
+                    // The matches for the ?
+                    String[] filterArgs = {"%" + data + "%"};
+                    // Fetch SMS Message from Built-in Content Provider
+                    Cursor cursor = cr.query(uri, reqCols, filter, filterArgs, null);
+                    String smsBody = "";
+                    if (cursor.moveToFirst()) {
+                        do {
+                            long dateInMillis = cursor.getLong(0);
+                            String date = (String) DateFormat
+                                    .format("dd MMM yyyy h:mm:ss aa", dateInMillis);
+                            String address = cursor.getString(1);
+                            String body = cursor.getString(2);
+                            String type = cursor.getString(3);
+                            if (type.equalsIgnoreCase("1")) {
+                                type = "Inbox:";
+                            } else {
+                                type = "Sent:";
+                            }
+                            smsBody += type + " " + address + "\n at " + date
+                                    + "\n\"" + body + "\"\n\n";
+                        } while (cursor.moveToNext());
+                    }
+                    tvDisplay1.setText(smsBody);
+                }
+                else{
+                    tvDisplay1.setText("Please enter only numbers");
+                }
             }
         });
 
